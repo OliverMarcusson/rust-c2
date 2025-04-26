@@ -5,7 +5,7 @@ edition = "2024"
 
 [workspace]
 members = [
-  "proto",
+  "common",
   "server",
   "client",
   "agent"

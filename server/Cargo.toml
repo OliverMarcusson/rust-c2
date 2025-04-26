@@ -4,4 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-proto = { path = "../proto" }
+tokio = { version = "1.37", features = ["full"] }
+anyhow = "1.0.98"
+common = { path = "../common" }
+serde = { version = "1.0", features = ["derive"] }
+bincode = "1.3"
+
