@@ -1,20 +1,19 @@
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
-use tokio::net::TcpStream;
+use bincode::{Encode, Decode};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 pub enum OperatingSystems {
     Windows,
     Linux,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 pub struct ClientInfo {
     pub client_type: ClientType,
     pub os: OperatingSystems,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 pub enum ClientType {
     Client,
     Agent,

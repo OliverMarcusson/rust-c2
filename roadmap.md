@@ -2,7 +2,7 @@
 
 ### **Phase 0: Prep & Planning**
 - Research existing open-source (Red Team) C2s (e.g., Sliver, Mythic, Covenant) for context and inspiration.
-- Create a new Rust multi-binary workspace with shared types crate (`proto`).
+- Create a new Rust multi-binary workspace with shared types crate (`common`).
 - Set minimal, testable milestones per phase.
 
 ---

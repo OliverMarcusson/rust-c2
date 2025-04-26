@@ -13,6 +13,8 @@ pub struct Client {
 }
 impl Client {
     async fn new(mut socket: TcpStream, addr: SocketAddr) -> anyhow::Result<Client> {
+        let config = bincode::config::standard();
+
         let mut buf = vec![0u8; 1024];
         let n = socket.read(&mut buf).await?;
 
@@ -22,7 +24,7 @@ impl Client {
             ));
         }
 
-        let info: ClientInfo = bincode::deserialize(&buf[..n])?;
+        let (info, len): (ClientInfo, usize) = bincode::decode_from_slice(&buf[..], config)?;
         Ok(Client {
             client_type: info.client_type,
             os: info.os,
@@ -44,7 +46,9 @@ async fn main() -> anyhow::Result<()> {
     loop {
         let (socket, addr) = listener.accept().await?;
         let mut client = Client::new(socket, addr).await?;
-        println!("New connection: {}!", client.addr);
+        println!("[*] New connection: {}", client.addr);
+        println!("[*] Client type: {:?}", client.client_type);
+        println!("[*] OS: {:?}", client.os);
 
         tokio::spawn(async move {
             let mut buf = vec![0; 1024];
