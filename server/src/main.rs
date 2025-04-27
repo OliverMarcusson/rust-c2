@@ -67,6 +67,7 @@ async fn client_handler(mut client: Client) -> anyhow::Result<()> {
             // Client disconnected
             Ok(n) if n == 0 => {
                 println!("[*] Client {:?} disconnected.", client.addr);
+                return Ok(());
             }
 
             // Valid client message
