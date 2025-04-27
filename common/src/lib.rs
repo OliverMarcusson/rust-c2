@@ -8,7 +8,7 @@ pub enum ListenerAction {
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]
 pub enum ListenerType {
-    Tcp { name: String, addr: String }
+    Tcp { addr: String }
 }
 
 #[derive(Debug, Encode, Decode, Serialize, Deserialize)]

@@ -16,11 +16,24 @@ impl Listener {
     }
 
     async fn start(&mut self) -> anyhow::Result<()> {
-        todo!();
-        // match self.ltype {
-        //     ListenerType::Tcp { name, addr }
-        // }
+        match &self.ltype {
+            ListenerType::Tcp { addr } => {
+                let listener = TcpListener::bind(addr).await?;
+                println!("[*] Started listener '{}'.", &self.name);
+                loop {
+                    let (socket, addr) = listener.accept().await?;
+                    let agent = Client::new(socket, addr).await?;
+                    tokio::spawn(async move {
+                        let _ = agent_handler(agent).await;
+                    });
+                }
+            }
+        }
     }
+}
+
+async fn agent_handler(agent: Client) -> anyhow::Result<()> {
+    todo!();
 }
 
 #[derive(Debug)]
@@ -46,13 +59,13 @@ impl Client {
         }
 
         // Decode info from client with bincode
-        let (info, len): (ClientInfo, usize) = bincode::decode_from_slice(&buf[..], config)?;
-        Ok(Client {
-            client_type: info.client_type,
-            os: info.os,
-            socket,
-            addr,
-        })
+        let (info, _): (ClientInfo, usize) = bincode::decode_from_slice(&buf[..], config)?;
+        let client = Client { client_type: info.client_type, os: info.os, socket, addr };
+        println!("[*] New connection: {}", client.addr);
+        println!("[*] Client type: {:?}", client.client_type);
+        println!("[*] OS: {:?}", client.os);
+
+        Ok(client)
     }
 }
 
@@ -65,7 +78,7 @@ async fn client_handler(mut client: Client) -> anyhow::Result<()> {
         // Error handling client message
         match message_len {
             // Client disconnected
-            Ok(n) if n == 0 => {
+            Ok(0) => {
                 println!("[*] Client {:?} disconnected.", client.addr);
                 return Ok(());
             }
@@ -91,9 +104,10 @@ async fn client_handler(mut client: Client) -> anyhow::Result<()> {
                     Message::Listener { action } => {
                         match action {
                             ListenerAction::Add { name, listener_type } => {
-                                match listener_type {
-                                    ListenerType::Tcp { name: listener_name, addr } => {
-
+                                match &listener_type {
+                                    ListenerType::Tcp { addr: _ } => {
+                                        let mut new_listener = Listener::new(name, listener_type);
+                                        let _ = new_listener.start().await;
                                     }
                                 }
                             }
@@ -121,10 +135,7 @@ async fn main() -> anyhow::Result<()> {
     loop {
         // Accept and create new client
         let (socket, addr) = listener.accept().await?;
-        let client = Client::new(socket, addr).await?;
-        println!("[*] New connection: {}", client.addr);
-        println!("[*] Client type: {:?}", client.client_type);
-        println!("[*] OS: {:?}", client.os);
+        let client = Client::new(socket, addr).await?; 
 
         tokio::spawn(async move {
             let _ = client_handler(client).await; 
