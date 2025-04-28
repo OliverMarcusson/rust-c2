@@ -1,41 +1,50 @@
-use serde::{Deserialize, Serialize};
-use bincode::{Encode, Decode};
+use bincode::{Decode, Encode};
 
-#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode)]
 pub enum ListenerAction {
-    Add { name: String, listener_type: ListenerType }
+    Add {
+        name: String,
+        listener_type: ListenerType,
+    },
 }
 
-#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode)]
 pub enum ListenerType {
-    Tcp { addr: String }
+    Tcp { addr: String },
 }
 
-#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode)]
 pub enum Message {
-    Echo { payload: Option<String> },
+    Echo {
+        payload: Option<String>,
+    },
     Register,
     Task,
     Exit,
     File,
-    Generate { name: String, os: OperatingSystem, listener: ListenerType },
-    Listener { action: ListenerAction }
+    Generate {
+        name: String,
+        os: OperatingSystem,
+        listener: ListenerType,
+    },
+    Listener {
+        action: ListenerAction,
+    },
 }
 
-
-#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode)]
 pub enum OperatingSystem {
     Windows,
     Linux,
 }
 
-#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode)]
 pub struct ClientInfo {
     pub client_type: ClientType,
     pub os: OperatingSystem,
 }
 
-#[derive(Debug, Encode, Decode, Serialize, Deserialize)]
+#[derive(Debug, Encode, Decode)]
 pub enum ClientType {
     Client,
     Agent,

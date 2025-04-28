@@ -1,1 +1,0 @@
-- Create client application. First thing it does when connecting is to send information about itself: client type and operating system.
