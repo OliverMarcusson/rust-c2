@@ -1,3 +1,4 @@
+// Common
 use bincode::{Decode, Encode};
 
 #[derive(Debug, Encode, Decode)]
@@ -44,8 +45,24 @@ pub struct ClientInfo {
     pub os: OperatingSystem,
 }
 
+impl ClientInfo {
+    pub fn new(client_type: ClientType, os: OperatingSystem) -> Self {
+        ClientInfo { client_type, os }
+    }
+}
+
 #[derive(Debug, Encode, Decode)]
 pub enum ClientType {
     Client,
     Agent,
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_os() -> OperatingSystem {
+    OperatingSystem::Windows
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_os() -> OperatingSystem {
+    OperatingSystem::Linux
 }
