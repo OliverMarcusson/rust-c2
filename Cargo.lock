@@ -97,16 +97,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "client"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode",
- "common",
- "tokio",
-]
-
-[[package]]
 name = "common"
 version = "0.1.0"
 dependencies = [
@@ -171,6 +161,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62948e14d923ea95ea2c7c86c71013138b66525b86bdc08d2dcc262bdb497b87"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "operator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "common",
+ "tokio",
 ]
 
 [[package]]

@@ -1,22 +1,29 @@
-// Server
-use tokio::net::TcpListener;
+// Improved main 
 
-pub mod client;
-use client::*;
-pub mod listener;
+// Manager thread that spawns and shuts down listseners.
+// Based on requests from a message queue.
+async fn listener_manager() -> anyhow::Result<()> {Ok(())}
 
+// Thread that listens for new clients (operators or agents).
+// Spawns handlers for new connections.
+async fn client_listener() -> anyhow::Result<()> {Ok(())}
+
+// Thread that handles clients (operators or agents).
+// Recieves and responds to commands and callbacks.
+// Can send messages to the listener manager to start or stop listeners.
+async fn client_handler() -> anyhow::Result<()> {Ok(())}
+
+// Thread that generates agent binaries from requests in a queue.
+// Recieves requests from client handlers.
+async fn agent_generator() -> anyhow::Result<()> {Ok(())}
+
+// Manager thread that handles active agent state.
+// Gives out agent information when requested from a queue.
+// Removes agent state when tasked by message.
+async fn agent_manager() -> anyhow::Result<()> {Ok(())}
+
+// Main function
+// Spawns manager threads.
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let listener = TcpListener::bind("0.0.0.0:9000").await?;
-    println!("Server Listening on port 9000!");
+async fn main() -> anyhow::Result<()> {Ok(())}
 
-    loop {
-        // Accept and create new client
-        let (socket, addr) = listener.accept().await?;
-        let mut client = Client::new(socket, addr).await?;
-
-        tokio::spawn(async move {
-            let _ = client.client_handler().await;
-        });
-    }
-}
