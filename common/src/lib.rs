@@ -1,6 +1,19 @@
 // Common
 use bincode::{Decode, Encode};
 
+#[derive(Debug, Encode, Decode, PartialEq)]
+pub enum ServerMessage {
+    Success,
+    Failure
+}
+
+#[derive(Debug, Encode, Decode)]
+pub enum OperatorMessage {
+    Echo { message: String },
+    Listener { action: ListenerAction },
+    Disconnected
+}
+
 #[derive(Debug, Encode, Decode)]
 pub enum ListenerAction {
     Add {
