@@ -1,15 +1,16 @@
 use std::net::SocketAddr;
-use common::{OperatorMessage, ServerMessage};
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::{TcpListener, TcpStream}};
+use common::{ListenerAction, OperatorMessage, ServerMessage};
+use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::{TcpListener, TcpStream}, sync::mpsc::Sender};
 
 pub struct Operator {
     name: String,
     socket: TcpStream,
-    addr: SocketAddr
+    addr: SocketAddr,
+    listener_manager_tx: Sender<ListenerAction>
 }
 
 impl Operator {
-    pub async fn accept(listener: &mut TcpListener) -> anyhow::Result<Self> {
+    pub async fn accept(listener: &mut TcpListener, listener_manager_tx: Sender<ListenerAction>) -> anyhow::Result<Self> {
         let (mut socket, addr) = listener.accept().await?;
         match socket.read_u64().await {
             Ok(0) => {
@@ -20,7 +21,7 @@ impl Operator {
                 let mut buf = vec![0u8; len as usize];
                 let _ = socket.read_exact(&mut buf).await;
                 let name = String::from_utf8(buf)?;
-                Ok(Operator { name, socket, addr })
+                Ok(Operator { name, socket, addr, listener_manager_tx })
             },
             Err(e) => {
                 Err(anyhow::anyhow!("Couldn't recieve data from operator: {}", e))
@@ -60,9 +61,9 @@ impl Operator {
 
 // Thread that listens for new clients (operators or agents).
 // Spawns handlers for new connections.
-pub async fn operator_listener(mut listener: TcpListener) -> anyhow::Result<()> {
+pub async fn operator_listener(mut listener: TcpListener, listener_manager_tx: Sender<ListenerAction>) -> anyhow::Result<()> {
     loop {
-        let operator = Operator::accept(&mut listener).await?;
+        let operator = Operator::accept(&mut listener, listener_manager_tx.clone()).await?;
         println!("[*] Operator {}@{} connected.", &operator.name, &operator.addr);
         
         tokio::spawn(operator_handler(operator));
@@ -86,6 +87,9 @@ pub async fn operator_handler(mut operator: Operator) -> anyhow::Result<()> {
                         println!("[*] Operator {}@{} disconnected.", &operator.name, &operator.addr);
                         return Ok(());
                     },
+                    OperatorMessage::Listener { action } => {
+                        operator.listener_manager_tx.send(action).await;
+                    }, 
                     unimplemented => {
                         println!("Unimplemented message: {:?}", unimplemented);
                         operator.send(ServerMessage::Failure).await?;
