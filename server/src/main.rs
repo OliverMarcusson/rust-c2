@@ -3,28 +3,51 @@ mod agent;
 mod operator;
 mod listener;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use agent::*;
 use common::{ListenerAction, ListenerType};
+use listener::Listener;
 use operator::*;
-use tokio::{net::TcpListener, sync::mpsc::{self, Receiver}};
+use tokio::{net::TcpListener, sync::{mpsc::{self, Receiver}, Mutex}};
 
-// Manager thread that spawns and shuts down listseners.
-// Based on requests from a message queue.
-async fn listener_manager(reciever: Receiver<ListenerAction>) -> anyhow::Result<()> {
-    let listeners: HashMap<String, Box<dyn Listener>> = HashMap::new();
-    println!("[Listener Manager] Running.");
-    while let Some(action) = reciever.recv().await {
-        match action {
-            ListenerAction::Add { name, listener_type } => {
-                match listener_type {
-                    ListenerType::Tcp { addr } => todo!()
-                }
-            }
-        }
+pub struct ListenerManager<T: Listener> {
+    listeners: HashMap<String, Arc<Mutex<T>>>,
+}
+
+impl<T: Listener + Send + 'static> ListenerManager<T> {
+    pub fn new() -> Self {
+        let listeners: HashMap<String, Arc<Mutex<T>>> = HashMap::new();
+        ListenerManager { listeners }
     }
-    Ok(())
+    
+    // Adds and starts the listener.
+    pub async fn add(&mut self, listener: T) -> anyhow::Result<()> {
+        let name = listener.get_name();
+        let listener = Arc::new(Mutex::new(listener));
+        self.listeners.insert(name.clone(), listener.clone());
+        // let listener_ref = self.listeners.get_mut(&name).unwrap(); 
+        tokio::spawn(async move {
+            listener.lock().await.start().await;
+        });
+        Ok(())
+    }
+}
+
+pub struct AgentManager<T: Agent> {
+    agents: HashMap<String, T>,
+}
+
+impl<T: Agent> AgentManager<T> {
+    pub fn new() -> Self {
+        let agents: HashMap<String, T> = HashMap::new();
+        AgentManager { agents }
+    }
+
+    // Adds and starts handling the agent.
+    pub async fn add(&mut self, agent: T) -> anyhow::Result<()> {
+        todo!()
+    }
 }
 
 // Thread that generates agent binaries from requests in a queue.
@@ -45,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     let (listener_manager_tx, listener_manager_rx) = mpsc::channel::<ListenerAction>(100);
     println!("[*] Server running at {addr}.");
 
-    tokio::spawn(listener_manager(listener_manager_rx));
+    // tokio::spawn(listener_manager(listener_manager_rx));
     tokio::spawn(operator_listener(listener, listener_manager_tx));
 
     // Making sure server never exits by waiting for a future forever.

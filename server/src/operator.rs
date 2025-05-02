@@ -90,10 +90,10 @@ pub async fn operator_handler(mut operator: Operator) -> anyhow::Result<()> {
                     OperatorMessage::Listener { action } => {
                         operator.listener_manager_tx.send(action).await;
                     }, 
-                    unimplemented => {
-                        println!("Unimplemented message: {:?}", unimplemented);
-                        operator.send(ServerMessage::Failure).await?;
-                    }
+                    // unimplemented => {
+                    //     println!("Unimplemented message: {:?}", unimplemented);
+                    //     operator.send(ServerMessage::Failure).await?;
+                    // }
                 }
             },
             Err(err) => {println!("Failed to recieve message {:?}", err); return Ok(());}

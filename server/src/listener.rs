@@ -1,40 +1,42 @@
-use std::net::SocketAddr;
-use crate::agent::{agent_handler, Agent, TcpAgent};
+use std::{net::SocketAddr, sync::Arc};
+use tokio::sync::Mutex;
+use crate::AgentManager;
+use crate::agent::TcpAgent;
 
 pub trait Listener {
-    async fn start(&mut self) -> anyhow::Result<()>;
-    async fn stop(&self) -> anyhow::Result<()>;
+    fn start(&mut self) -> impl std::future::Future<Output = anyhow::Result<()>> + std::marker::Send;
+    // async fn start(&mut self) -> anyhow::Result<()> ;
+    fn get_name(&self) -> String;
 }
 
 pub struct TcpListener {
+    name: String,
     listener: tokio::net::TcpListener,
+    agent_manager: Arc<Mutex<AgentManager<TcpAgent>>>,
     running: bool
 }
 
 impl TcpListener {
-    pub async fn new(addr: SocketAddr) -> anyhow::Result<Self> {
+    pub async fn new(name: String, addr: SocketAddr, agent_manager: Arc<Mutex<AgentManager<TcpAgent>>>) -> anyhow::Result<Self> {
         let listener = tokio::net::TcpListener::bind(addr).await?;
-        Ok(TcpListener { listener, running: false })
-    }
-
-    pub async fn accept(&mut self) -> anyhow::Result<()> {
-        while self.running {
-            let (socket, addr) = self.listener.accept().await?;
-            let agent = TcpAgent::new(socket, addr);
-            tokio::spawn(agent_handler(agent));
-        }
-        Ok(())
-    }
+        
+        // Adds the listener to the manager
+        Ok(TcpListener { name, listener, agent_manager, running: false })
+    } 
 }
 
 impl Listener for TcpListener {
-    async fn start(&mut self) -> anyhow::Result<()> {
+     async fn start(&mut self) -> anyhow::Result<()> {
         self.running = true;
-        // tokio::spawn(self.accept());
+        while self.running {
+            let (socket, addr) = self.listener.accept().await?;
+            let agent = TcpAgent::new(socket, addr);
+            self.agent_manager.lock().await.add(agent);
+        }
         Ok(())
     }
 
-    async fn stop(&self) -> anyhow::Result<()> {
-        todo!()
-    }
+     fn get_name(&self) -> String {
+         self.name.clone()
+     }
 }
